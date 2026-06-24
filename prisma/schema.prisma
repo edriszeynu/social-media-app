@@ -1,0 +1,136 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// 1. USER MODEL
+// Stores all account information and profile data.
+// ------------------------------------------------------
+model User {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  username    String    @unique
+  email       String    @unique
+  password    String    // Hashed with bcrypt
+  bio         String?   // Optional bio
+  avatar      String?   // Cloudinary/AWS image URL
+
+  // Relationships
+  posts       Post[]    // Posts created by this user
+  comments    Comment[] // Comments made by this user
+  likes       Like[]    // Likes given by this user
+  
+  // Self-referencing Follow system
+  following   Follow[]  @relation("Following") // Users this user follows
+  followers   Follow[]  @relation("Followers") // Users following this user
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ------------------------------------------------------
+// 2. POST MODEL
+// Stores blog posts / status updates.
+// ------------------------------------------------------
+model Post {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  content     String    // The main text of the post
+  imageUrl    String?   // Optional attached image
+
+  // Relationships
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String    @db.ObjectId
+  comments    Comment[] // Comments on this post
+  likes       Like[]    // Likes on this post
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ------------------------------------------------------
+// 3. COMMENT MODEL
+// Supports nested replies (threaded comments).
+// ------------------------------------------------------
+model Comment {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  content     String
+
+  // Relationships
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String    @db.ObjectId
+  post        Post      @relation(fields: [postId], references: [id])
+  postId      String    @db.ObjectId
+
+  // Self-referencing for nested replies
+  parentId    String?   @db.ObjectId
+  replies     Comment[] @relation("Replies", fields: [parentId], references: [id])
+
+  // Metadata
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ------------------------------------------------------
+// 4. LIKE MODEL
+// Tracks which user liked which post.
+// ------------------------------------------------------
+model Like {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Relationships
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @db.ObjectId
+  post        Post      @relation(fields: [postId], references: [id])
+  postId      String    @db.ObjectId
+
+  // Ensures a user can only like a post once
+  @@unique([userId, postId])
+}
+
+// ------------------------------------------------------
+// 5. FOLLOW MODEL
+// Tracks the follower/following relationships.
+// ------------------------------------------------------
+model Follow {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Relationships
+  follower    User      @relation("Following", fields: [followerId], references: [id])
+  followerId  String    @db.ObjectId
+  following   User      @relation("Followers", fields: [followingId], references: [id])
+  followingId String    @db.ObjectId
+
+  // Prevents duplicate follow entries
+  @@unique([followerId, followingId])
+}
+
+// ------------------------------------------------------
+// 6. NOTIFICATION MODEL (BONUS)
+// For real-time alerts when someone likes, comments, or follows.
+// ------------------------------------------------------
+model Notification {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  type        String    // e.g., "LIKE", "COMMENT", "FOLLOW"
+  read        Boolean   @default(false) // Read/unread status
+
+  // Relationships
+  recipient   User      @relation(fields: [recipientId], references: [id])
+  recipientId String    @db.ObjectId
+  actor       User      @relation(fields: [actorId], references: [id])
+  actorId     String    @db.ObjectId
+  
+  // Optional links to the specific interaction
+  postId      String?   @db.ObjectId
+  commentId   String?   @db.ObjectId
+
+  createdAt   DateTime  @default(now())
+}
