@@ -125,16 +125,23 @@ export async function toggleLike(postId: string) {
   })
 
   if (existingLike) {
-    await prisma.like.delete({
-      where: { id: existingLike.id },
-    })
+    await prisma.like.delete({ where: { id: existingLike.id } })
   } else {
     await prisma.like.create({
-      data: {
-        userId: session.userId,
-        postId,
-      },
+      data: { userId: session.userId, postId },
     })
+    // Notify post author (not self)
+    const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } })
+    if (post && post.authorId !== session.userId) {
+      await prisma.notification.create({
+        data: {
+          type: 'like',
+          recipientId: post.authorId,
+          actorId: session.userId,
+          postId,
+        },
+      })
+    }
   }
 
   revalidatePath('/')
@@ -175,17 +182,34 @@ export async function getPostById(postId: string): Promise<Post | null> {
     })),
   }
 }
+// ------------------------------------------------------------------
+// 5. Add a comment
+// ------------------------------------------------------------------
 export async function addComment(postId: string, content: string) {
   const session = await getSession()
   if (!session || !content?.trim()) return
 
-  await prisma.comment.create({
+  const comment = await prisma.comment.create({
     data: {
       content: content.trim(),
       authorId: session.userId,
       postId,
     },
+    select: { post: { select: { authorId: true } } },
   })
 
+  // Notify post author (not self)
+  if (comment.post.authorId !== session.userId) {
+    await prisma.notification.create({
+      data: {
+        type: 'comment',
+        recipientId: comment.post.authorId,
+        actorId: session.userId,
+        postId,
+      },
+    })
+  }
+
   revalidatePath('/')
+  revalidatePath(`/post/${postId}`)
 }

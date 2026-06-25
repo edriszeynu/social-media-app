@@ -22,9 +22,14 @@ export async function toggleFollow(targetUserId: string) {
     await prisma.follow.delete({ where: { id: existing.id } })
   } else {
     await prisma.follow.create({
+      data: { followerId: session.userId, followingId: targetUserId },
+    })
+    // Notify the followed user
+    await prisma.notification.create({
       data: {
-        followerId: session.userId,
-        followingId: targetUserId,
+        type: 'follow',
+        recipientId: targetUserId,
+        actorId: session.userId,
       },
     })
   }
