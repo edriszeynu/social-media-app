@@ -12,7 +12,7 @@ import { TrendingTopics } from '@/components/home/TrendingTopics'
 import { SuggestedUsers } from '@/components/home/SuggestedUsers'
 import { RecentActivity } from '@/components/home/RecentActivity'
 import { Sparkles } from 'lucide-react'
-import { createPost, deletePost, toggleLike, addComment } from '@/app/actions/posts'
+import { deletePost, toggleLike, addComment } from '@/app/actions/posts'
 
 interface FullUser extends User {
   _count: {
@@ -38,10 +38,19 @@ export function HomePageClient({ initialPosts, session, user, suggestedUsers }: 
   const [isPending, startTransition] = useTransition()
 
   const handleNewPost = async (content: string, imageUrl?: string) => {
-    const formData = new FormData()
-    formData.append('content', content)
-    if (imageUrl) formData.append('imageUrl', imageUrl)
-    await createPost(formData)
+    // Optimistically add to feed — server already saved via createPost action
+    const newPost = {
+      id: `temp-${Date.now()}`,
+      content,
+      imageUrl: imageUrl || null,
+      createdAt: new Date().toISOString(),
+      author: { id: user.id, username: user.username, avatar: user.avatar },
+      likes: [],
+      isLiked: false,
+      likesCount: 0,
+      comments: [],
+    }
+    setPosts((prev) => [newPost, ...prev])
   }
 
   const handleDelete = async (postId: string) => {
@@ -111,7 +120,11 @@ export function HomePageClient({ initialPosts, session, user, suggestedUsers }: 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <CreatePost onPostCreated={handleNewPost} />
+          <CreatePost
+              username={user.username}
+              avatar={user.avatar}
+              onPostCreated={handleNewPost}
+            />
 
           {posts.length === 0 ? (
             <Card className="p-12 text-center border-dashed border-2 border-border/30">

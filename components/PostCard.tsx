@@ -60,14 +60,14 @@ export function PostCard({
               {post.author.username}
             </p>
           </Link>
-          <p className="text-xs text-muted-foreground">
+          <Link href={`/post/${post.id}`} className="text-xs text-muted-foreground hover:underline">
             {new Date(post.createdAt).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
               hour: "2-digit",
               minute: "2-digit",
             })}
-          </p>
+          </Link>
         </div>
         {isAuthor && (
           <Button
@@ -82,7 +82,9 @@ export function PostCard({
       </CardHeader>
 
       <CardContent className="px-4 pb-2 space-y-3">
-        <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+        <Link href={`/post/${post.id}`}>
+          <p className="text-sm whitespace-pre-wrap hover:text-primary/80 transition-colors cursor-pointer">{post.content}</p>
+        </Link>
         {post.imageUrl && (
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden bg-muted">
             <Image

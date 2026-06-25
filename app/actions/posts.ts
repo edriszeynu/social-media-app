@@ -62,9 +62,7 @@ export async function getFeedPosts(): Promise<Post[]> {
   }))
 }
 
-// ------------------------------------------------------------------
-// 2. Create a new post
-// ------------------------------------------------------------------
+// app/actions/posts.ts createPost — no redirect, return success
 export async function createPost(formData: FormData) {
   const session = await getSession()
   if (!session) throw new Error('Unauthorized')
@@ -85,7 +83,7 @@ export async function createPost(formData: FormData) {
   })
 
   revalidatePath('/')
-  redirect('/')
+  return { success: true }
 }
 
 // ------------------------------------------------------------------
@@ -143,8 +141,40 @@ export async function toggleLike(postId: string) {
 }
 
 // ------------------------------------------------------------------
-// 5. Add a comment
+// 6. Get a single post by ID
 // ------------------------------------------------------------------
+export async function getPostById(postId: string): Promise<Post | null> {
+  const session = await getSession()
+  if (!session) return null
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    include: {
+      author: { select: { id: true, username: true, avatar: true } },
+      likes: { select: { userId: true } },
+      comments: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          author: { select: { id: true, username: true, avatar: true } },
+        },
+      },
+    },
+  })
+
+  if (!post) return null
+
+  return {
+    ...post,
+    imageUrl: post.imageUrl || null,
+    likes: post.likes.map((l) => l.userId),
+    isLiked: post.likes.some((l) => l.userId === session.userId),
+    likesCount: post.likes.length,
+    comments: post.comments.map((c) => ({
+      ...c,
+      author: { id: c.author.id, username: c.author.username, avatar: c.author.avatar },
+    })),
+  }
+}
 export async function addComment(postId: string, content: string) {
   const session = await getSession()
   if (!session || !content?.trim()) return
