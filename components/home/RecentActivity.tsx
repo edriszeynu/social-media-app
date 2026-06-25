@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Flame, Heart, MessageCircle } from "lucide-react";
-import { Post } from "@/lib/dummy-data";
+import { Post } from '@/lib/types'
 
 interface RecentActivityProps {
   posts: Post[];

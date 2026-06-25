@@ -4,7 +4,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sparkles, Clock, TrendingUp } from "lucide-react";
-import { User } from "@/lib/dummy-data";
+import { User } from "@/lib/types";
 
 interface HeroProps {
   user: User;

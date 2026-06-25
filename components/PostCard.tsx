@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Post } from "@/lib/dummy-data";
+import { Post } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,13 @@ interface PostCardProps {
   onComment: (postId: string, content: string) => void;
 }
 
-export function PostCard({ post, currentUserId, onDelete, onLike, onComment }: PostCardProps) {
+export function PostCard({
+  post,
+  currentUserId,
+  onDelete,
+  onLike,
+  onComment,
+}: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const isLiked = post.likes.includes(currentUserId);
@@ -39,13 +45,20 @@ export function PostCard({ post, currentUserId, onDelete, onLike, onComment }: P
       <CardHeader className="flex flex-row items-center gap-3 p-4">
         <Link href={`/profile/${post.author.username}`}>
           <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary">
-            <AvatarImage src={post.author.avatar} alt={post.author.username} />
-            <AvatarFallback>{post.author.username[0].toUpperCase()}</AvatarFallback>
+            <AvatarImage
+              src={post.author.avatar || ""}
+              alt={post.author.username}
+            />
+            <AvatarFallback>
+              {post.author.username[0].toUpperCase()}
+            </AvatarFallback>
           </Avatar>
         </Link>
         <div className="flex-1">
           <Link href={`/profile/${post.author.username}`}>
-            <p className="font-semibold hover:underline text-sm">{post.author.username}</p>
+            <p className="font-semibold hover:underline text-sm">
+              {post.author.username}
+            </p>
           </Link>
           <p className="text-xs text-muted-foreground">
             {new Date(post.createdAt).toLocaleDateString("en-US", {
@@ -72,7 +85,12 @@ export function PostCard({ post, currentUserId, onDelete, onLike, onComment }: P
         <p className="text-sm whitespace-pre-wrap">{post.content}</p>
         {post.imageUrl && (
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden bg-muted">
-            <Image src={post.imageUrl} alt="Post image" fill className="object-cover" />
+            <Image
+              src={post.imageUrl}
+              alt="Post image"
+              fill
+              className="object-cover"
+            />
           </div>
         )}
       </CardContent>
@@ -111,13 +129,18 @@ export function PostCard({ post, currentUserId, onDelete, onLike, onComment }: P
                 post.comments.map((comment) => (
                   <div key={comment.id} className="flex items-start gap-2">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={comment.author.avatar} />
+                      <AvatarImage
+                        src={comment.author.avatar || ""}
+                        alt={comment.author.username}
+                      />
                       <AvatarFallback className="text-xs">
                         {comment.author.username[0].toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="bg-muted/50 rounded-lg px-3 py-1.5 flex-1">
-                      <p className="text-xs font-semibold">{comment.author.username}</p>
+                      <p className="text-xs font-semibold">
+                        {comment.author.username}
+                      </p>
                       <p className="text-sm">{comment.content}</p>
                     </div>
                   </div>

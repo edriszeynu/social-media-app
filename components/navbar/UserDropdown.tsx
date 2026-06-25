@@ -1,9 +1,9 @@
 // components/navbar/UserDropdown.tsx
-"use client";
+'use client'
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { currentUser } from "@/lib/dummy-data";
-import { User, Heart, Settings, LogOut } from "lucide-react";
+} from '@/components/ui/dropdown-menu'
+import { User, Heart, Settings, LogOut } from 'lucide-react'
+import { logoutUser } from '@/app/actions/auth'
 
-export function UserDropdown() {
+interface UserDropdownProps {
+  session: {
+    userId: string
+    username: string
+    email: string
+  }
+}
+
+export function UserDropdown({ session }: UserDropdownProps) {
+  // We'll fetch user avatar from database, but for now use placeholder
+  const avatarUrl = `https://i.pravatar.cc/150?u=${session.userId}`
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,9 +36,9 @@ export function UserDropdown() {
           className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-primary/40 transition-all duration-200"
         >
           <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
-            <AvatarImage src={currentUser.avatar} alt={currentUser.username} />
+            <AvatarImage src={avatarUrl} alt={session.username} />
             <AvatarFallback className="bg-gradient-to-br from-primary to-purple-500 text-primary-foreground">
-              {currentUser.username[0].toUpperCase()}
+              {session.username[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -38,41 +49,35 @@ export function UserDropdown() {
       >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none">
-              {currentUser.username}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {currentUser.email}
-            </p>
+            <p className="text-sm font-semibold leading-none">{session.username}</p>
+            <p className="text-xs leading-none text-muted-foreground">{session.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-muted/50 hover:text-primary transition-colors duration-200">
             <User className="mr-2 h-4 w-4" />
-            <Link href={`/profile/${currentUser.username}`} className="w-full">
-              My Profile
-            </Link>
+            <Link href={`/profile/${session.username}`} className="w-full">My Profile</Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-muted/50 hover:text-primary transition-colors duration-200">
             <Heart className="mr-2 h-4 w-4" />
-            <Link href="/saved" className="w-full">
-              Saved Posts
-            </Link>
+            <Link href="/saved" className="w-full">Saved Posts</Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-muted/50 hover:text-primary transition-colors duration-200">
             <Settings className="mr-2 h-4 w-4" />
-            <Link href="/settings" className="w-full">
-              Settings
-            </Link>
+            <Link href="/settings" className="w-full">Settings</Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors duration-200">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout (Demo)</span>
-        </DropdownMenuItem>
+        <form action={logoutUser}>
+          <DropdownMenuItem asChild className="cursor-pointer rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors duration-200">
+            <button type="submit" className="w-full flex items-center">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          </DropdownMenuItem>
+        </form>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
